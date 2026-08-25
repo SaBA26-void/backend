@@ -1,0 +1,47 @@
+@OnlineShop.Api_HostAddress = http://localhost:5151
+
+### Categories — hierarchical tree
+GET {{OnlineShop.Api_HostAddress}}/api/categories
+Accept: application/json
+
+### Products — paginated list
+GET {{OnlineShop.Api_HostAddress}}/api/products?page=1&pageSize=10
+Accept: application/json
+
+### Products — filter by category (includes subcategories)
+GET {{OnlineShop.Api_HostAddress}}/api/products?categoryId=2&page=1&pageSize=10
+Accept: application/json
+
+### Product by id
+GET {{OnlineShop.Api_HostAddress}}/api/products/1
+Accept: application/json
+
+### Create product
+POST {{OnlineShop.Api_HostAddress}}/api/products
+Content-Type: application/json
+
+{
+  "name": "Test Product",
+  "description": "Created via HTTP file for Step 2 verification.",
+  "price": 19.99,
+  "stockQuantity": 5,
+  "categoryId": 4,
+  "imageUrl": "https://picsum.photos/seed/testproduct/600/600"
+}
+
+### Update product
+PUT {{OnlineShop.Api_HostAddress}}/api/products/1
+Content-Type: application/json
+
+{
+  "name": "Classic Cotton T-Shirt Updated",
+  "description": "Soft everyday tee in a regular fit.",
+  "price": 27.99,
+  "stockQuantity": 110,
+  "categoryId": 4,
+  "imageUrl": "https://picsum.photos/seed/tee/600/600"
+}
+
+### Delete product
+DELETE {{OnlineShop.Api_HostAddress}}/api/products/12
+Accept: application/json
