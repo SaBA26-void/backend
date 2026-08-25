@@ -25,6 +25,9 @@ public class ProductsController : ControllerBase
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10,
         [FromQuery] string sort = "name_asc",
+        [FromQuery] string? search = null,
+        [FromQuery] decimal? minPrice = null,
+        [FromQuery] decimal? maxPrice = null,
         CancellationToken cancellationToken = default)
     {
         if (page < 1)
@@ -35,6 +38,11 @@ public class ProductsController : ControllerBase
         if (pageSize < 1 || pageSize > 100)
         {
             return BadRequest("pageSize must be between 1 and 100.");
+        }
+
+        if (minPrice is decimal min && maxPrice is decimal max && min > max)
+        {
+            return BadRequest("minPrice cannot be greater than maxPrice.");
         }
 
         var query = _db.Products.AsNoTracking().AsQueryable();
@@ -54,6 +62,25 @@ public class ProductsController : ControllerBase
             }
 
             query = query.Where(p => categoryIds.Contains(p.CategoryId));
+        }
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim().ToLower();
+            query = query.Where(p =>
+                p.Name.ToLower().Contains(term)
+                || p.Description.ToLower().Contains(term)
+                || p.Category.Name.ToLower().Contains(term));
+        }
+
+        if (minPrice is decimal minimumPrice)
+        {
+            query = query.Where(p => p.Price >= minimumPrice);
+        }
+
+        if (maxPrice is decimal maximumPrice)
+        {
+            query = query.Where(p => p.Price <= maximumPrice);
         }
 
         query = ApplySort(query, sort);
