@@ -101,6 +101,25 @@ public class OrdersController : ControllerBase
         return Ok(order);
     }
 
+    [HttpDelete("{id:int}")]
+    [AdminAuthorize]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteOrder(int id, CancellationToken cancellationToken)
+    {
+        var order = await _db.Orders.FirstOrDefaultAsync(o => o.Id == id, cancellationToken);
+        if (order is null)
+        {
+            return NotFound();
+        }
+
+        _db.Orders.Remove(order);
+        await _db.SaveChangesAsync(cancellationToken);
+
+        return NoContent();
+    }
+
     private static System.Linq.Expressions.Expression<Func<Order, OrderDto>> MapOrderDto() =>
         o => new OrderDto
         {
