@@ -30,10 +30,16 @@ public class CreateOrderDto
 {
     [Required]
     [StringLength(100, MinimumLength = 1)]
+    [RegularExpression(
+        @"^[\p{L}][\p{L}\s\-']*$",
+        ErrorMessage = "First name must contain letters only (no numbers).")]
     public string FirstName { get; set; } = string.Empty;
 
     [Required]
     [StringLength(100, MinimumLength = 1)]
+    [RegularExpression(
+        @"^[\p{L}][\p{L}\s\-']*$",
+        ErrorMessage = "Last name must contain letters only (no numbers).")]
     public string LastName { get; set; } = string.Empty;
 
     [Required]
