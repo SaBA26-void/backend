@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using OnlineShop.Api.Data;
 using OnlineShop.Api.DTOs;
 using OnlineShop.Api.Entities;
+using OnlineShop.Api.Security;
 
 namespace OnlineShop.Api.Controllers;
 
@@ -15,6 +16,24 @@ public class OrdersController : ControllerBase
     public OrdersController(AppDbContext db)
     {
         _db = db;
+    }
+
+    /// <summary>
+    /// Admin: list all delivery orders, newest first.
+    /// </summary>
+    [HttpGet]
+    [AdminAuthorize]
+    [ProducesResponseType(typeof(List<OrderDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<List<OrderDto>>> GetOrders(CancellationToken cancellationToken)
+    {
+        var orders = await _db.Orders
+            .AsNoTracking()
+            .OrderByDescending(o => o.CreatedAtUtc)
+            .Select(MapOrderDto())
+            .ToListAsync(cancellationToken);
+
+        return Ok(orders);
     }
 
     [HttpPost]
@@ -55,65 +74,23 @@ public class OrdersController : ControllerBase
         var dto = await _db.Orders
             .AsNoTracking()
             .Where(o => o.Id == order.Id)
-            .Select(o => new OrderDto
-            {
-                Id = o.Id,
-                FirstName = o.FirstName,
-                LastName = o.LastName,
-                PersonalNumber = o.PersonalNumber,
-                Address = o.Address,
-                City = o.City,
-                Comment = o.Comment,
-                TotalAmount = o.TotalAmount,
-                CreatedAtUtc = o.CreatedAtUtc,
-                Items = o.Items.Select(i => new OrderItemDto
-                {
-                    Id = i.Id,
-                    ProductId = i.ProductId,
-                    VariantId = i.VariantId,
-                    ProductName = i.ProductName,
-                    Size = i.Size,
-                    Color = i.Color,
-                    UnitPrice = i.UnitPrice,
-                    Quantity = i.Quantity
-                }).ToList()
-            })
+            .Select(MapOrderDto())
             .FirstAsync(cancellationToken);
 
         return CreatedAtAction(nameof(GetOrder), new { id = dto.Id }, dto);
     }
 
     [HttpGet("{id:int}")]
+    [AdminAuthorize]
     [ProducesResponseType(typeof(OrderDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<OrderDto>> GetOrder(int id, CancellationToken cancellationToken)
     {
         var order = await _db.Orders
             .AsNoTracking()
             .Where(o => o.Id == id)
-            .Select(o => new OrderDto
-            {
-                Id = o.Id,
-                FirstName = o.FirstName,
-                LastName = o.LastName,
-                PersonalNumber = o.PersonalNumber,
-                Address = o.Address,
-                City = o.City,
-                Comment = o.Comment,
-                TotalAmount = o.TotalAmount,
-                CreatedAtUtc = o.CreatedAtUtc,
-                Items = o.Items.Select(i => new OrderItemDto
-                {
-                    Id = i.Id,
-                    ProductId = i.ProductId,
-                    VariantId = i.VariantId,
-                    ProductName = i.ProductName,
-                    Size = i.Size,
-                    Color = i.Color,
-                    UnitPrice = i.UnitPrice,
-                    Quantity = i.Quantity
-                }).ToList()
-            })
+            .Select(MapOrderDto())
             .FirstOrDefaultAsync(cancellationToken);
 
         if (order is null)
@@ -123,4 +100,29 @@ public class OrdersController : ControllerBase
 
         return Ok(order);
     }
+
+    private static System.Linq.Expressions.Expression<Func<Order, OrderDto>> MapOrderDto() =>
+        o => new OrderDto
+        {
+            Id = o.Id,
+            FirstName = o.FirstName,
+            LastName = o.LastName,
+            PersonalNumber = o.PersonalNumber,
+            Address = o.Address,
+            City = o.City,
+            Comment = o.Comment,
+            TotalAmount = o.TotalAmount,
+            CreatedAtUtc = o.CreatedAtUtc,
+            Items = o.Items.Select(i => new OrderItemDto
+            {
+                Id = i.Id,
+                ProductId = i.ProductId,
+                VariantId = i.VariantId,
+                ProductName = i.ProductName,
+                Size = i.Size,
+                Color = i.Color,
+                UnitPrice = i.UnitPrice,
+                Quantity = i.Quantity
+            }).ToList()
+        };
 }
