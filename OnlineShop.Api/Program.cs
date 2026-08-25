@@ -27,7 +27,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins(allowedOrigins)
+        policy.SetIsOriginAllowed(origin => IsAllowedOrigin(origin, allowedOrigins))
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
@@ -65,6 +65,34 @@ app.MapGet("/", () => Results.Ok(new
 app.MapControllers();
 
 app.Run();
+
+static bool IsAllowedOrigin(string origin, string[] configuredOrigins)
+{
+    if (configuredOrigins.Any(o =>
+            string.Equals(o, origin, StringComparison.OrdinalIgnoreCase)))
+    {
+        return true;
+    }
+
+    if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri))
+    {
+        return false;
+    }
+
+    // Local Next.js
+    if (uri.Host is "localhost" or "127.0.0.1")
+    {
+        return true;
+    }
+
+    // Vercel previews + production
+    if (uri.Host.EndsWith(".vercel.app", StringComparison.OrdinalIgnoreCase))
+    {
+        return true;
+    }
+
+    return false;
+}
 
 static bool IsRunningOnRailway() =>
     !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("RAILWAY_ENVIRONMENT"))
