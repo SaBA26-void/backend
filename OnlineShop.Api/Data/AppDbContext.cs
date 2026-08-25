@@ -12,6 +12,8 @@ public class AppDbContext : DbContext
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<Product> Products => Set<Product>();
     public DbSet<ProductVariant> ProductVariants => Set<ProductVariant>();
+    public DbSet<Order> Orders => Set<Order>();
+    public DbSet<OrderItem> OrderItems => Set<OrderItem>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -51,6 +53,32 @@ public class AppDbContext : DbContext
             entity.HasOne(v => v.Product)
                 .WithMany(p => p.Variants)
                 .HasForeignKey(v => v.ProductId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Order>(entity =>
+        {
+            entity.HasKey(o => o.Id);
+            entity.Property(o => o.FirstName).IsRequired().HasMaxLength(100);
+            entity.Property(o => o.LastName).IsRequired().HasMaxLength(100);
+            entity.Property(o => o.PersonalNumber).IsRequired().HasMaxLength(11);
+            entity.Property(o => o.Address).IsRequired().HasMaxLength(200);
+            entity.Property(o => o.City).IsRequired().HasMaxLength(100);
+            entity.Property(o => o.Comment).HasMaxLength(1000);
+            entity.Property(o => o.TotalAmount).HasPrecision(18, 2);
+        });
+
+        modelBuilder.Entity<OrderItem>(entity =>
+        {
+            entity.HasKey(i => i.Id);
+            entity.Property(i => i.ProductName).IsRequired().HasMaxLength(200);
+            entity.Property(i => i.Size).HasMaxLength(50);
+            entity.Property(i => i.Color).HasMaxLength(50);
+            entity.Property(i => i.UnitPrice).HasPrecision(18, 2);
+
+            entity.HasOne(i => i.Order)
+                .WithMany(o => o.Items)
+                .HasForeignKey(i => i.OrderId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 

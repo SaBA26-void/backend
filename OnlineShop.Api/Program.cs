@@ -59,7 +59,8 @@ app.MapGet("/", () => Results.Ok(new
     message = "Online Shop API is running",
     swagger = "/swagger",
     categories = "/api/categories",
-    products = "/api/products"
+    products = "/api/products",
+    orders = "/api/orders"
 }));
 
 app.MapControllers();
