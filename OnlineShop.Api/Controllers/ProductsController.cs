@@ -24,6 +24,7 @@ public class ProductsController : ControllerBase
         [FromQuery] int? categoryId,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10,
+        [FromQuery] string sort = "name_asc",
         CancellationToken cancellationToken = default)
     {
         if (page < 1)
@@ -55,10 +56,11 @@ public class ProductsController : ControllerBase
             query = query.Where(p => categoryIds.Contains(p.CategoryId));
         }
 
+        query = ApplySort(query, sort);
+
         var totalCount = await query.CountAsync(cancellationToken);
 
         var items = await query
-            .OrderBy(p => p.Name)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .Select(MapProductDto())
@@ -208,6 +210,15 @@ public class ProductsController : ControllerBase
 
         return NoContent();
     }
+
+    private static IQueryable<Product> ApplySort(IQueryable<Product> query, string? sort) =>
+        (sort ?? "name_asc").Trim().ToLowerInvariant() switch
+        {
+            "name_desc" => query.OrderByDescending(p => p.Name),
+            "price_asc" => query.OrderBy(p => p.Price).ThenBy(p => p.Name),
+            "price_desc" => query.OrderByDescending(p => p.Price).ThenBy(p => p.Name),
+            _ => query.OrderBy(p => p.Name)
+        };
 
     private async Task<HashSet<int>> GetCategoryAndDescendantIdsAsync(
         int categoryId,
